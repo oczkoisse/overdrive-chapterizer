@@ -221,13 +221,13 @@ def _select_chapters(chapters: List[Chap]):
         response = input('Select chapters to include: ')
         selection = _parse_selection(response)
 
-        if selection is not None and len(selection) < len(chapters):
-            selected_chapters = [chapters[i-1] for i in selection if 1 <= i <= len(chapters)]
+        if selection is not None:
+            if len(selection) < len(chapters):
+                selected_chapters = [chapters[i-1] for i in selection if 1 <= i <= len(chapters)]
 
-            if len(selected_chapters) > 0:
-                for sc1, sc2 in zip(selected_chapters, selected_chapters[1:] + [None] if len(selected_chapters) >= 2 else [None]):
-                    all_selected.append(Chap(title=sc1.title, start=sc1.start, end=sc2.start if sc2 is not None else chapters[-1].end))
-
+                if len(selected_chapters) > 0:
+                    for sc1, sc2 in zip(selected_chapters, selected_chapters[1:] + [None] if len(selected_chapters) >= 2 else [None]):
+                        all_selected.append(Chap(title=sc1.title, start=sc1.start, end=sc2.start if sc2 is not None else chapters[-1].end))
             break
         else:
             print("Please enter a valid selection.")
