@@ -75,6 +75,9 @@ def _remove_existing_chapter_metadata(mp3):
     toc_eids = [toc.element_id for toc in mp3.tag.table_of_contents]
     chap_eids = [chap.element_id for chap in mp3.tag.chapters]
 
+    if len(toc_eids) + len(chap_eids) > 0:
+        print("Removing existing chapters from {}".format(mp3_file.name))
+
     for toc_eid in toc_eids:
         mp3.tag.table_of_contents.remove(toc_eid)
 
@@ -100,7 +103,6 @@ if __name__ == '__main__':
         if len(chapters) > 0:
             chapters[-1].end = mp3_duration
 
-            print("Removing existing chapters from {}".format(mp3_file.name))
             _remove_existing_chapter_metadata(mp3)
 
             toc = mp3.tag.table_of_contents.set(b'toc', toplevel=True, description=u'Table of Contents')
