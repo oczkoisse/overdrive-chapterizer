@@ -87,6 +87,7 @@ def _remove_existing_chapter_metadata(mp3):
 
 if __name__ == '__main__':
     parser = ArgumentParser()
+    parser.description = "Adds ID3v2 chapter tags to mp3 audiobook files downloaded from Overdrive"
     parser.add_argument('path', help='Path to audiobook directory')
     args = parser.parse_args()
 
