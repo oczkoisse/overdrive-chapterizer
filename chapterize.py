@@ -7,7 +7,9 @@ import sys
 from recordclass import recordclass
 import eyed3
 from eyed3.mp3 import Mp3AudioFile
-from tabulate import tabulate
+import tabulate
+
+tabulate.PRESERVE_WHITESPACE = True
 
 Chap = recordclass('Chap', 'title start end')
 
@@ -204,7 +206,7 @@ def _print_chapters(chapters: List[Chap], index=False, title=True, start=False, 
          if end:
              data[-1].append(chap.end)
 
-    print(tabulate(data, headers="firstrow"))
+    print(tabulate.tabulate(data, headers="firstrow"))
 
 
 def _select_chapters(chapters: List[Chap]):
