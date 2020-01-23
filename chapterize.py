@@ -7,8 +7,9 @@ import sys
 from recordclass import recordclass
 import eyed3
 from eyed3.mp3 import Mp3AudioFile
+from tabulate import tabulate
 
-Chap = recordclass('Chap', 'title start end time')
+Chap = recordclass('Chap', 'title start end')
 
 
 def _time_to_milliseconds(t: str) -> int:
@@ -38,7 +39,6 @@ def _parse_markers(markers) -> List[Chap]:
     :return: a list of Chap items
     """
     titles = []
-    times = []
     starts = []
 
     print("Parsing Overdrive chapters: ", end='')
@@ -49,7 +49,6 @@ def _parse_markers(markers) -> List[Chap]:
         time = marker.find('Time')
         if name is not None and time is not None:
             titles.append(name.text)
-            times.append(time.text)
             starts.append(_time_to_milliseconds(time.text))
 
     if len(starts) > 0:
@@ -59,8 +58,8 @@ def _parse_markers(markers) -> List[Chap]:
 
     chapters = []
 
-    for title, time, start, end in zip(titles, times, starts, ends):
-        chapters.append(Chap(title=title, time=time, start=start, end=end))
+    for title, start, end in zip(titles, starts, ends):
+        chapters.append(Chap(title=title, start=start, end=end))
 
     print("{} chapters parsed.".format(len(chapters)))
 
@@ -167,6 +166,78 @@ def _write_chapters(mp3: Mp3AudioFile, chapters: List[Chap]) -> None:
         print("Added chapter: {}".format(chapter.title))
 
 
+def _parse_selection(selection: str):
+    selected = []
+    for s in selection.split(','):
+        try:
+            numbers = [int(n.strip()) for n in s.strip().split('-')]
+            if len(numbers) == 1:
+                selected.append(numbers[0])
+            elif len(numbers) == 2:
+                selected.extend(list(range(min(numbers), max(numbers) + 1)))
+            else:
+                return None
+        except ValueError:
+            return None
+    return list(sorted(set(selected)))
+
+
+def _print_chapters(chapters: List[Chap], index=False, title=True, start=False, end=False) -> None:
+    data = [[]]
+    if index:
+        data[-1].append("Idx")
+    if title:
+        data[-1].append("Title")
+    if start:
+        data[-1].append("Start")
+    if end:
+        data[-1].append("End")
+
+    for idx, chap in zip(range(1, len(chapters) + 1), chapters):
+         data.append([])
+         if index:
+             data[-1].append(idx)
+         if title:
+             data[-1].append(chap.title)
+         if start:
+             data[-1].append(chap.start)
+         if end:
+             data[-1].append(chap.end)
+
+    print(tabulate(data, headers="firstrow"))
+
+
+def _select_chapters(chapters: List[Chap]):
+    all_selected = []
+    if len(chapters) == 0:
+        return all_selected
+
+    while True:
+        _print_chapters(chapters, index=True, title=True)
+        print()
+
+        response = input('Select chapters to include: ')
+        selection = _parse_selection(response)
+
+        if selection is not None and len(selection) < len(chapters):
+            selected_chapters = [chapters[i-1] for i in selection if 1 <= i <= len(chapters)]
+
+            if len(selected_chapters) > 0:
+                for sc1, sc2 in zip(selected_chapters, selected_chapters[1:] + [None] if len(selected_chapters) >= 2 else [None]):
+                    all_selected.append(Chap(title=sc1.title, start=sc1.start, end=sc2.start if sc2 is not None else chapters[-1].end))
+
+            break
+        else:
+            print("Please enter a valid selection.")
+            print("A valid selection consists of comma delimited integers or integer ranges. Example: 1-3, 5, 4")
+
+    print("Selected chapters: ", end='\n\n')
+    _print_chapters(all_selected, index=True, title=True, start=True, end=True)
+    print()
+
+    return all_selected
+
+
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.description = "Adds ID3v2 chapter tags to mp3 audiobook files downloaded from Overdrive"
@@ -174,6 +245,8 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--overwrite', action='store_const', const=True, default=False,
                         help='Overwrite existing chapter information. Without this flag, mp3 files with '
                              'exisitng chapter information will be ignored')
+    parser.add_argument('-s', '--select', action='store_const', const=True, default=False,
+                        help='In select mode, user will be asked to select chapters for each mp3 file')
 
     args = parser.parse_args()
 
@@ -208,13 +281,26 @@ if __name__ == '__main__':
             if args.overwrite:
                 print(" Overwriting.", end='\n\n')
                 _remove_existing_chapter_metadata(mp3)
-                _write_chapters(mp3, chapters)
+                try:
+                    selected = _select_chapters(chapters) if args.select  else chapters
+                    _write_chapters(mp3, selected)
+                except KeyboardInterrupt:
+                    sys.exit(0)
+                except EOFError:
+                    sys.exit(0)
+
                 print()
             else:
                 print(" Ignoring.", end='\n\n')
                 continue
         else:
-            _write_chapters(mp3, chapters)
+            try:
+                selected = _select_chapters(chapters) if args.confirm else chapters
+                _write_chapters(mp3, selected)
+            except KeyboardInterrupt:
+                sys.exit(0)
+            except EOFError:
+                sys.exit(0)
 
         print("Saving tags: ", end='')
         mp3.tag.save()

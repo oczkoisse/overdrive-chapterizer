@@ -8,11 +8,12 @@ To that end, this script parses Overdrive audiobooks for the chapter information
 ## Requirements
 - `eyed3`
 - `recordclass`
+- `tabulate`
 
 ## Installation
 - Setup a virtual environment and install requirements
 ```
-pip install eyed3 recordclass
+pip install eyed3 recordclass tabulate
 ```
 
 - `python3 chapterize.py <audiobook_dir>`
