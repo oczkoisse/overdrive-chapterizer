@@ -1,14 +1,21 @@
-import eyed3
 from pathlib import Path
 from typing import List
 from argparse import ArgumentParser
 import xml.etree.ElementTree as ET
+
 from recordclass import recordclass
+import eyed3
+from eyed3.mp3 import Mp3AudioFile
 
 Chap = recordclass('Chap', 'title start end time')
 
 
-def _time_to_milliseconds(t):
+def _time_to_milliseconds(t: str) -> int:
+    """
+    Converts hh:mm:ss.zzz into integer milliseconds
+    :param t: a string formatted as [[hh:]mm:]ss[.zzz]
+    :return: number of milliseconds
+    """
     time_comp = t.strip().split(':')
     secs = 0.0
     if len(time_comp) > 0:
@@ -23,7 +30,12 @@ def _time_to_milliseconds(t):
     return int(seconds * 1000)
 
 
-def _parse_markers(markers):
+def _parse_markers(markers) -> List[Chap]:
+    """
+    Parses markers into Chap items
+    :param markers: a user frame called 'Overdrive MediaMarkers' containing XML formatted markers
+    :return: a list of Chap items
+    """
     if markers is None:
         return []
 
@@ -53,7 +65,12 @@ def _parse_markers(markers):
     return chapters
 
 
-def _load_markers(mp3):
+def _load_markers(mp3: Mp3AudioFile):
+    """
+    Returns 'Overdrive MediaMarkers' user frame (containing markers) from the loaded mp3 file
+    :param mp3: the loaded mp3 file
+    :return: 'Overdrive MediaMarkers' user frame if found, else None
+    """
     user_frames = mp3.tag.user_text_frames
     if 'OverDrive MediaMarkers' in user_frames:
         markers = user_frames.get('OverDrive MediaMarkers')
@@ -63,7 +80,7 @@ def _load_markers(mp3):
 
 def _find_mp3_files(dir: str) -> List[Path]:
     """
-    Provides a list of paths to mp3 files in a given director
+    Provides a list of paths to mp3 files in a given directory
     :param dir: A directory
     :return: List of mp3 file paths
     """
@@ -71,7 +88,12 @@ def _find_mp3_files(dir: str) -> List[Path]:
     return list(p.glob('*.mp3'))
 
 
-def _remove_existing_chapter_metadata(mp3):
+def _remove_existing_chapter_metadata(mp3: Mp3AudioFile) -> None:
+    """
+    Removes existing chapter tags from the loaded mp3 file if present.
+    Note that this does not save the modified tags.
+    :param mp3: the loaded mp3 file
+    """
     toc_eids = [toc.element_id for toc in mp3.tag.table_of_contents]
     chap_eids = [chap.element_id for chap in mp3.tag.chapters]
 
