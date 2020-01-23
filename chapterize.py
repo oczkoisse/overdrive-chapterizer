@@ -282,7 +282,7 @@ if __name__ == '__main__':
                 print(" Overwriting.", end='\n\n')
                 _remove_existing_chapter_metadata(mp3)
                 try:
-                    selected = _select_chapters(chapters) if args.select  else chapters
+                    selected = _select_chapters(chapters) if args.select else chapters
                     _write_chapters(mp3, selected)
                 except KeyboardInterrupt:
                     sys.exit(0)
@@ -295,7 +295,7 @@ if __name__ == '__main__':
                 continue
         else:
             try:
-                selected = _select_chapters(chapters) if args.confirm else chapters
+                selected = _select_chapters(chapters) if args.select else chapters
                 _write_chapters(mp3, selected)
             except KeyboardInterrupt:
                 sys.exit(0)
