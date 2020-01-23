@@ -158,6 +158,9 @@ def _abort():
 
 
 def _write_chapters(mp3: Mp3AudioFile, chapters: List[Chap]) -> None:
+    if len(chapters) == 0:
+        return
+
     toc = mp3.tag.table_of_contents.set(b'toc', toplevel=True, description=u'Table of Contents')
 
     for index, chapter in zip(range(1, len(chapters) + 1), chapters):
@@ -170,6 +173,10 @@ def _write_chapters(mp3: Mp3AudioFile, chapters: List[Chap]) -> None:
 
 def _parse_selection(selection: str):
     selected = []
+
+    if selection.strip() == '':
+        return selected
+
     for s in selection.split(','):
         try:
             numbers = [int(n.strip()) for n in s.strip().split('-')]
@@ -222,20 +229,28 @@ def _select_chapters(chapters: List[Chap]):
         selection = _parse_selection(response)
 
         if selection is not None:
-            if len(selection) < len(chapters):
-                selected_chapters = [chapters[i-1] for i in selection if 1 <= i <= len(chapters)]
+            selected_chapters = [chapters[i - 1] for i in selection if 1 <= i <= len(chapters)]
 
-                if len(selected_chapters) > 0:
-                    for sc1, sc2 in zip(selected_chapters, selected_chapters[1:] + [None] if len(selected_chapters) >= 2 else [None]):
-                        all_selected.append(Chap(title=sc1.title, start=sc1.start, end=sc2.start if sc2 is not None else chapters[-1].end))
+            if len(selected_chapters) > 0:
+                if len(selected_chapters) < len(chapters):
+                    # Create modified timestamps to account for the missing chapters
+                    for sc1, sc2 in zip(selected_chapters,
+                                        selected_chapters[1:] + [None] if len(selected_chapters) >= 2 else [None]):
+                        all_selected.append(Chap(title=sc1.title, start=sc1.start,
+                                                 end=sc2.start if sc2 is not None else chapters[-1].end))
+                else:
+                    # No chapter omitted, so no timestamp modification needed
+                    all_selected = selected_chapters
+
             break
         else:
             print("Please enter a valid selection.")
             print("A valid selection consists of comma delimited integers or integer ranges. Example: 1-3, 5, 4")
 
-    print("Selected chapters: ", end='\n\n')
-    _print_chapters(all_selected, index=True, title=True, start=True, end=True)
-    print()
+    if len(selection) > 0:
+        print("Selected chapters: ", end='\n\n')
+        _print_chapters(all_selected, index=True, title=True, start=True, end=True)
+        print()
 
     return all_selected
 
