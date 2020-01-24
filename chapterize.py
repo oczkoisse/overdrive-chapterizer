@@ -261,7 +261,7 @@ if __name__ == '__main__':
     parser.add_argument('path', help='Path to audiobook directory')
     parser.add_argument('-o', '--overwrite', action='store_const', const=True, default=False,
                         help='Overwrite existing chapter information. Without this flag, mp3 files with '
-                             'exisitng chapter information will be ignored')
+                             'existing chapter information will be ignored')
     parser.add_argument('-s', '--select', action='store_const', const=True, default=False,
                         help='In select mode, user will be asked to select chapters for each mp3 file')
 
