@@ -1,8 +1,8 @@
 from pathlib import Path
 import sys
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog
-from PyQt5.QtCore import pyqtSlot, QAbstractTableModel, Qt
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QDirModel
+from PyQt5.QtCore import pyqtSlot, QAbstractTableModel, Qt, QDir, QItemSelection
 
 from Ui_chapterize import Ui_ChapterizeWindow
 from mp3file import Mp3File
@@ -10,21 +10,20 @@ from mp3file import Mp3File
 
 class ChaptersTableModel(QAbstractTableModel):
 
-    headers = ["Title", "Start", "End", "Filename"]
+    headers = ["Title", "Start", "End"]
 
-    def __init__(self, dir):
+    def __init__(self, mp3_filepath=''):
         super().__init__()
-        self._all_chapters = []
-        self.set_directory(dir)
+        self.set_file(mp3_filepath)
 
-    def set_directory(self, dir):
-        self._all_chapters.clear()
-
-        for mp3_filepath in Path(dir).glob('*.mp3'):
-            mp3 = Mp3File(mp3_filepath)
-            self._all_chapters.extend(list(zip(mp3.chapters, [mp3] * len(mp3.chapters))))
+    def set_file(self, mp3_filepath):
+        self.beginResetModel()
+        self._mp3 = Mp3File(mp3_filepath) if mp3_filepath != '' else None
+        self.endResetModel()
 
     def data(self, index, role):
+        if self._mp3 is None:
+            return None
         if role != Qt.DisplayRole:
             return None
         if not index.isValid():
@@ -33,7 +32,7 @@ class ChaptersTableModel(QAbstractTableModel):
         col = index.column()
         row = index.row()
 
-        ch, mp3 = self._all_chapters[row]
+        ch = self._mp3.chapters[row]
 
         if col == 0:
             return ch.title
@@ -41,8 +40,6 @@ class ChaptersTableModel(QAbstractTableModel):
             return str(ch.start)
         elif col == 2:
             return str(ch.end)
-        elif col == 3:
-            return mp3.path.name
 
         return None
 
@@ -52,9 +49,9 @@ class ChaptersTableModel(QAbstractTableModel):
         return ChaptersTableModel.headers[section]
 
     def rowCount(self, parent):
-        if parent.isValid():
+        if parent.isValid() or self._mp3 is None:
             return 0
-        return len(self._all_chapters)
+        return len(self._mp3.chapters)
 
     def columnCount(self, parent):
         if parent.isValid():
@@ -71,17 +68,26 @@ class Chapterize(QMainWindow):
         self.ui.actionChangeDir.triggered.connect(self.onActionChangeDirectory)
         self.ui.actionExit.triggered.connect(self.close)
 
-        self.model = None
-        self.dir = ""
+        self.dir = QDir.homePath()
+
+        self.chaptersTableModel = ChaptersTableModel()
+        self.ui.chapterTable.setModel(self.chaptersTableModel)
+
+        self.mp3ListModel = QDirModel(['*.mp3'], QDir.Files, QDir.Name)
+        self.ui.mp3List.setModel(self.mp3ListModel)
+        self.ui.mp3List.setRootIndex(self.mp3ListModel.index(self.dir))
+        self.ui.mp3List.selectionModel().selectionChanged.connect(self.onSelectionChanged)
 
     @pyqtSlot()
     def onActionChangeDirectory(self):
-        self.dir = QFileDialog.getExistingDirectory(self, "Change Directory...", self.dir)
-        if self.model is None:
-            self.model = ChaptersTableModel(self.dir)
-            self.ui.chapterTable.setModel(self.model)
-        else:
-            self.model.set_directory(self.dir)
+        self.dir = QFileDialog.getExistingDirectory(self, "Change Directory...", self.dir, QFileDialog.ShowDirsOnly)
+        self.ui.mp3List.setRootIndex(self.mp3ListModel.index(self.dir))
+
+    @pyqtSlot(QItemSelection, QItemSelection)
+    def onSelectionChanged(self, selected, deselected):
+        sel_idx = selected.indexes()[0]
+        pth = self.mp3ListModel.fileInfo(sel_idx).absoluteFilePath()
+        self.chaptersTableModel.set_file(pth)
 
 
 if __name__ == '__main__':

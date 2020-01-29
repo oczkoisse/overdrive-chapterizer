@@ -16,7 +16,17 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <widget class="QTableView" name="chapterTable"/>
+     <widget class="QListView" name="mp3List"/>
+    </item>
+    <item>
+     <widget class="QTableView" name="chapterTable">
+      <property name="selectionMode">
+       <enum>QAbstractItemView::SingleSelection</enum>
+      </property>
+      <property name="selectionBehavior">
+       <enum>QAbstractItemView::SelectRows</enum>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>
