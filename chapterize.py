@@ -15,6 +15,10 @@ class ChaptersTableModel(QAbstractTableModel):
     def __init__(self, dir):
         super().__init__()
         self._all_chapters = []
+        self.set_directory(dir)
+
+    def set_directory(self, dir):
+        self._all_chapters.clear()
 
         for mp3_filepath in Path(dir).glob('*.mp3'):
             mp3 = Mp3File(mp3_filepath)
@@ -66,13 +70,18 @@ class Chapterize(QMainWindow):
 
         self.ui.actionChangeDir.triggered.connect(self.onActionChangeDirectory)
         self.ui.actionExit.triggered.connect(self.close)
+
+        self.model = None
         self.dir = ""
 
     @pyqtSlot()
     def onActionChangeDirectory(self):
         self.dir = QFileDialog.getExistingDirectory(self, "Change Directory...", self.dir)
-        self.model = ChaptersTableModel(self.dir)
-        self.ui.chapterTable.setModel(self.model)
+        if self.model is None:
+            self.model = ChaptersTableModel(self.dir)
+            self.ui.chapterTable.setModel(self.model)
+        else:
+            self.model.set_directory(self.dir)
 
 
 if __name__ == '__main__':
