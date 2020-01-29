@@ -6,3 +6,6 @@ class Chapter(object):
         self.title = title
         self.start = start
         self.end = end
+
+    def __str__(self):
+        return '{}'.format(', '.join([self.title, str(self.start), str(self.end)]))

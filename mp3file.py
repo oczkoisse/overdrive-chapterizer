@@ -93,3 +93,7 @@ class Mp3File(object):
     @property
     def media_markers(self):
         return self._media_markers
+
+    def __str__(self):
+        return "{}:\n{}".format(self.path.name,
+                                '\n'.join([str(ch) for ch in self._chapters]))
