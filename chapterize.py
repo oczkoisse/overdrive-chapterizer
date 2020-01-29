@@ -1,7 +1,7 @@
 from pathlib import Path
 import sys
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QDirModel
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QFileSystemModel
 from PyQt5.QtCore import pyqtSlot, QAbstractTableModel, Qt, QDir, QItemSelection
 
 from Ui_chapterize import Ui_ChapterizeWindow
@@ -73,15 +73,23 @@ class Chapterize(QMainWindow):
         self.chaptersTableModel = ChaptersTableModel()
         self.ui.chapterTable.setModel(self.chaptersTableModel)
 
-        self.mp3ListModel = QDirModel(['*.mp3'], QDir.Files, QDir.Name)
+        self.mp3ListModel = QFileSystemModel()
+        self.mp3ListModel.setNameFilters(['*.mp3'])
+        self.mp3ListModel.setFilter(QDir.Files)
+        self.mp3ListModel.setRootPath(self.dir)
+        self.mp3ListModel.setNameFilterDisables(False)
+
         self.ui.mp3List.setModel(self.mp3ListModel)
         self.ui.mp3List.setRootIndex(self.mp3ListModel.index(self.dir))
         self.ui.mp3List.selectionModel().selectionChanged.connect(self.onSelectionChanged)
 
     @pyqtSlot()
     def onActionChangeDirectory(self):
-        self.dir = QFileDialog.getExistingDirectory(self, "Change Directory...", self.dir, QFileDialog.ShowDirsOnly)
-        self.ui.mp3List.setRootIndex(self.mp3ListModel.index(self.dir))
+        chosen_dir = QFileDialog.getExistingDirectory(self, "Change Directory...", self.dir, QFileDialog.ShowDirsOnly)
+        if chosen_dir != '':
+            self.dir = chosen_dir
+            self.mp3ListModel.setRootPath(self.dir)
+            self.ui.mp3List.setRootIndex(self.mp3ListModel.index(self.dir))
 
     @pyqtSlot(QItemSelection, QItemSelection)
     def onSelectionChanged(self, selected, deselected):
