@@ -17,8 +17,15 @@ class ChaptersTableModel(QAbstractTableModel):
         self.set_file(mp3_filepath)
 
     def set_file(self, mp3_filepath):
+        mp3 = None
+        if mp3_filepath != '':
+            try:
+                mp3 = Mp3File(mp3_filepath)
+            except IOError:
+                return
+
         self.beginResetModel()
-        self._mp3 = Mp3File(mp3_filepath) if mp3_filepath != '' else None
+        self._mp3 = mp3
         self.endResetModel()
 
     def data(self, index, role):
