@@ -35,6 +35,7 @@ class Ui_ChapterizeWindow(object):
         self.chapterTable.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self.chapterTable.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.chapterTable.setObjectName("chapterTable")
+        self.chapterTable.horizontalHeader().setStretchLastSection(True)
         self.horizontalLayout.addWidget(self.chapterTable)
         ChapterizeWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(ChapterizeWindow)
