@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '.\Chapterize.ui'
+# Form implementation generated from reading ui file 'Chapterize.ui'
 #
 # Created by: PyQt5 UI code generator 5.13.0
 #
@@ -19,9 +19,19 @@ class Ui_ChapterizeWindow(object):
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.centralwidget)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.mp3List = QtWidgets.QListView(self.centralwidget)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(4)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.mp3List.sizePolicy().hasHeightForWidth())
+        self.mp3List.setSizePolicy(sizePolicy)
         self.mp3List.setObjectName("mp3List")
         self.horizontalLayout.addWidget(self.mp3List)
         self.chapterTable = QtWidgets.QTableView(self.centralwidget)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(6)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.chapterTable.sizePolicy().hasHeightForWidth())
+        self.chapterTable.setSizePolicy(sizePolicy)
         self.chapterTable.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
         self.chapterTable.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
         self.chapterTable.setObjectName("chapterTable")
