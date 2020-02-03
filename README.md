@@ -19,3 +19,5 @@ This utility allows you to:
 ```
 python3 chapterize.py
 ```
+
+<img src="https://user-images.githubusercontent.com/10922171/73630047-345bab80-4612-11ea-8d4c-ab400b13805f.png" width="90%"></img> 
