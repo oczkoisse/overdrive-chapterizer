@@ -129,15 +129,15 @@ class ChaptersTableModel(QAbstractTableModel):
             return super().flags(index) | Qt.ItemIsEditable
         return super().flags(index)
 
+    def save(self):
+        self._mp3.save()
+
 
 class Chapterize(QMainWindow):
     def __init__(self):
         super().__init__()
         self.ui = Ui_ChapterizeWindow()
         self.ui.setupUi(self)
-
-        self.ui.actionChangeDir.triggered.connect(self.onDirectoryChange)
-        self.ui.actionExit.triggered.connect(self.close)
 
         self.dir = QDir.homePath()
 
@@ -157,6 +157,10 @@ class Chapterize(QMainWindow):
         self.ui.mp3List.setRootIndex(self.mp3ListModel.index(self.dir))
         self.ui.mp3List.selectionModel().selectionChanged.connect(self.onMp3Select)
 
+        self.ui.actionChangeDir.triggered.connect(self.onDirectoryChange)
+        self.ui.actionExit.triggered.connect(self.close)
+        self.ui.actionSave.triggered.connect(self.chaptersTableModel.save)
+
     @pyqtSlot()
     def onDirectoryChange(self):
         chosen_dir = QFileDialog.getExistingDirectory(self, "Change Directory...", self.dir, QFileDialog.ShowDirsOnly)
@@ -172,7 +176,7 @@ class Chapterize(QMainWindow):
         self.chaptersTableModel.set_file(pth)
 
     @pyqtSlot(QContextMenuEvent)
-    def onChapterContextMenu(self, e: QContextMenuEvent):
+    def onChapterContextMenu(self, e):
         idx = self.ui.chapterTable.indexAt(e.pos())
         row = idx.row()
         if row < 0:

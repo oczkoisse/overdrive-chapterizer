@@ -53,7 +53,11 @@ class Mp3File(object):
         toc = self._mp3.tag.table_of_contents.set(b'toc', toplevel=True, description=u'Table of Contents')
 
         for index, chapter in zip(range(1, len(self.chapters) + 1), self.chapters):
-            ch = self._mp3.tag.chapters.set('ch{}'.format(index).encode('ascii'), (chapter.start, chapter.end))
+            start = chapter.start.total_milliseconds
+            end = chapter.end.total_milliseconds
+            ch_eid = 'ch{}'.format(index).encode('ascii')
+
+            ch = self._mp3.tag.chapters.set(ch_eid, (start, end))
             ch.title = chapter.title
             toc.child_ids.append(ch.element_id)
 
