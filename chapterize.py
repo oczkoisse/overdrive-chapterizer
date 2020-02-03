@@ -1,14 +1,42 @@
 from pathlib import Path
 import sys
 
-from PyQt5.QtGui import QContextMenuEvent
-from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QFileSystemModel, QMenu, QAction
-from PyQt5.QtCore import pyqtSlot, QAbstractTableModel, Qt, QDir, QItemSelection, QModelIndex
+from PyQt5.QtGui import QContextMenuEvent, QRegularExpressionValidator
+from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QFileSystemModel, QMenu, QAction, \
+    QStyledItemDelegate, QLineEdit
+from PyQt5.QtCore import pyqtSlot, QAbstractTableModel, Qt, QDir, QItemSelection, QModelIndex, QRegularExpression
 
 from Ui_chapterize import Ui_ChapterizeWindow
 from mp3file import Mp3File
 from chapter import Chapter
 from timestamp import Timestamp
+
+
+class TimestampDelegate(QStyledItemDelegate):
+    _ts_regex = QRegularExpression(r'\d+:[0-5]\d:[0-5]\d(\.\d{1,3})?')
+
+    def __init__(self):
+        super().__init__()
+
+    def createEditor(self, parent, option, index):
+        editor = QLineEdit(parent)
+        editor.setFrame(False)
+        if index.column() in [1, 2]:
+            editor.setValidator(QRegularExpressionValidator(TimestampDelegate._ts_regex))
+        return editor
+
+    def setEditorData(self, editor, index):
+        if index.isValid():
+            data = index.model().data(index, Qt.EditRole)
+            editor.setText(data)
+
+    def setModelData(self, editor, model, index):
+        data = editor.text()
+        model.setData(index, data, Qt.EditRole)
+
+    def updateEditorGeometry(self, editor, option, index):
+        editor.setGeometry(option.rect)
+
 
 class ChaptersTableModel(QAbstractTableModel):
 
@@ -30,10 +58,10 @@ class ChaptersTableModel(QAbstractTableModel):
         self._mp3 = mp3
         self.endResetModel()
 
-    def data(self, index, role=Qt.DisplayRole):
+    def data(self, index, role):
         if self._mp3 is None:
             return None
-        if role != Qt.DisplayRole:
+        if role not in (Qt.DisplayRole, Qt.EditRole):
             return None
         if not index.isValid():
             return None
@@ -51,6 +79,21 @@ class ChaptersTableModel(QAbstractTableModel):
             return str(ch.end)
 
         return None
+
+    def setData(self, index, value, role):
+        if index.isValid() and role == Qt.EditRole:
+            row, col = index.row(), index.column()
+            ch = self._mp3.chapters[row]
+            if col == 0:
+                ch.title = value
+            elif col == 1:
+                ch.start = Timestamp.from_string(value)
+            elif col == 2:
+                ch.end = Timestamp.from_string(value)
+            self.dataChanged.emit(index, index, [role])
+            return True
+        else:
+            return False
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if role != Qt.DisplayRole or orientation != Qt.Horizontal:
@@ -81,6 +124,11 @@ class ChaptersTableModel(QAbstractTableModel):
         self.endRemoveRows()
         return True
 
+    def flags(self, index: QModelIndex) -> Qt.ItemFlags:
+        if index.isValid():
+            return super().flags(index) | Qt.ItemIsEditable
+        return super().flags(index)
+
 
 class Chapterize(QMainWindow):
     def __init__(self):
@@ -95,6 +143,7 @@ class Chapterize(QMainWindow):
 
         self.chaptersTableModel = ChaptersTableModel()
         self.ui.chapterTable.setModel(self.chaptersTableModel)
+        self.ui.chapterTable.setItemDelegate(TimestampDelegate())
 
         self.ui.chapterTable.contextMenuEvent = self.onChapterContextMenu
 
