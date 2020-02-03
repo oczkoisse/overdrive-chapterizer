@@ -15,9 +15,20 @@ class Mp3File(object):
         if self._mp3 is not None:
             self._media_markers = self._read_media_markers()
             self._chapters = self._read_id3v2_chapters()
+            if len(self._chapters) == 0:
+                self._chapters = self.media_markers_as_chapters
 
     def _read_id3v2_chapters(self):
-        return self.media_markers_as_chapters
+        chapters = []
+        # Find top-level toc
+        for toc in self._mp3.tag.table_of_contents:
+            if toc.toplevel:
+                for ch_eid in toc.child_ids:
+                    ch = self._mp3.tag.chapters.get(ch_eid)
+                    title = ch.title
+                    start, end = map(Timestamp.from_milliseconds, ch.times)
+                    chapters.append(Chapter(title, start=start, end=end))
+        return chapters
 
     def _read_media_markers(self):
         user_frames = self._mp3.tag.user_text_frames
